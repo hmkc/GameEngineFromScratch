@@ -296,30 +296,30 @@ void OpenGLGraphicsManagerCommonBase::initializeGeometries(const Scene& scene) {
                     pGeometryNode->GetMaterialRef(material_index);
                 const auto material = scene.GetMaterial(material_key);
                 if (material) {
-                    function<uint32_t(const string, const shared_ptr<Image>&)>
+                    function<uint32_t(const string, const Image&)>
                         upload_texture = [this](
                                              const string& texture_key,
-                                             const shared_ptr<Image>& texture) {
+                                             const Image& texture) {
                             uint32_t texture_id;
                             auto it = m_Textures.find(texture_key);
                             if (it == m_Textures.end()) {
                                 glGenTextures(1, &texture_id);
                                 glBindTexture(GL_TEXTURE_2D, texture_id);
                                 uint32_t format, internal_format, type;
-                                getOpenGLTextureFormat(*texture, format,
+                                getOpenGLTextureFormat(texture, format,
                                                        internal_format, type);
-                                if (texture->compressed) {
+                                if (texture.compressed) {
                                     glCompressedTexImage2D(
                                         GL_TEXTURE_2D, 0, internal_format,
-                                        texture->Width, texture->Height, 0,
+                                        texture.Width, texture.Height, 0,
                                         static_cast<int32_t>(
-                                            texture->data_size),
-                                        texture->data);
+                                            texture.data_size),
+                                        texture.data);
                                 } else {
                                     glTexImage2D(
                                         GL_TEXTURE_2D, 0, internal_format,
-                                        texture->Width, texture->Height, 0,
-                                        format, type, texture->data);
+                                        texture.Width, texture.Height, 0,
+                                        format, type, texture.data);
                                 }
 
                                 glTexParameteri(GL_TEXTURE_2D,
@@ -457,9 +457,9 @@ void OpenGLGraphicsManagerCommonBase::initializeSkyBox(const Scene& scene) {
     // skybox, irradiance map
     for (uint32_t i = 0; i < 12; i++) {
         auto& texture = scene.SkyBox->GetTexture(i);
-        const auto& pImage = texture.GetTextureImage();
+        const auto& image = texture.GetTextureImage();
         uint32_t format, internal_format, type;
-        getOpenGLTextureFormat(*pImage, format, internal_format, type);
+        getOpenGLTextureFormat(image, format, internal_format, type);
 
         if (i == 0)  // do this only once
         {
@@ -467,44 +467,44 @@ void OpenGLGraphicsManagerCommonBase::initializeSkyBox(const Scene& scene) {
             const uint32_t indexies = 2;
             constexpr int32_t depth = faces * indexies;
             glTexStorage3D(target, kMaxMipLevels, internal_format,
-                           pImage->Width, pImage->Height, depth);
+                           image.Width, image.Height, depth);
         }
 
         int32_t level = i / 6;
         int32_t zoffset = i % 6;
-        if (pImage->compressed) {
+        if (image.compressed) {
             glCompressedTexSubImage3D(
-                target, level, 0, 0, zoffset, pImage->Width, pImage->Height, 1,
+                target, level, 0, 0, zoffset, image.Width, image.Height, 1,
                 internal_format,
-                static_cast<int32_t>(pImage->mipmaps[0].data_size),
-                pImage->data);
+                static_cast<int32_t>(image.mipmaps[0].data_size),
+                image.data);
         } else {
-            glTexSubImage3D(target, level, 0, 0, zoffset, pImage->Width,
-                            pImage->Height, 1, format, type, pImage->data);
+            glTexSubImage3D(target, level, 0, 0, zoffset, image.Width,
+                            image.Height, 1, format, type, image.data);
         }
     }
 
     // radiance map
     for (uint32_t i = 12; i < 18; i++) {
         auto& texture = scene.SkyBox->GetTexture(i);
-        const auto& pImage = texture.GetTextureImage();
+        const auto& image = texture.GetTextureImage();
         uint32_t format, internal_format, type;
-        getOpenGLTextureFormat(*pImage, format, internal_format, type);
+        getOpenGLTextureFormat(image, format, internal_format, type);
 
         int32_t zoffset = (i % 6) + 6;
-        for (decltype(pImage->mipmaps.size()) level = 0;
-             level < min(pImage->mipmaps.size(), kMaxMipLevels); level++) {
-            if (pImage->compressed) {
+        for (decltype(image.mipmaps.size()) level = 0;
+             level < min(image.mipmaps.size(), kMaxMipLevels); level++) {
+            if (image.compressed) {
                 glCompressedTexSubImage3D(
-                    target, level, 0, 0, zoffset, pImage->mipmaps[level].Width,
-                    pImage->mipmaps[level].Height, 1, internal_format,
-                    static_cast<int32_t>(pImage->mipmaps[level].data_size),
-                    pImage->data + pImage->mipmaps[level].offset);
+                    target, level, 0, 0, zoffset, image.mipmaps[level].Width,
+                    image.mipmaps[level].Height, 1, internal_format,
+                    static_cast<int32_t>(image.mipmaps[level].data_size),
+                    image.data + image.mipmaps[level].offset);
             } else {
                 glTexSubImage3D(target, level, 0, 0, zoffset,
-                                pImage->mipmaps[level].Width,
-                                pImage->mipmaps[level].Height, 1, format, type,
-                                pImage->data + pImage->mipmaps[level].offset);
+                                image.mipmaps[level].Width,
+                                image.mipmaps[level].Height, 1, format, type,
+                                image.data + image.mipmaps[level].offset);
             }
         }
     }
@@ -584,17 +584,17 @@ void OpenGLGraphicsManagerCommonBase::initializeTerrain(const Scene& scene) {
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
     auto& texture = scene.Terrain->GetTexture(0);
-    const auto& pImage = texture.GetTextureImage();
+    const auto& image = texture.GetTextureImage();
 
     uint32_t format, internal_format, type;
-    getOpenGLTextureFormat(*pImage, format, internal_format, type);
-    if (pImage->compressed) {
+    getOpenGLTextureFormat(image, format, internal_format, type);
+    if (image.compressed) {
         glCompressedTexImage2D(
-            GL_TEXTURE_2D, 0, internal_format, pImage->Width, pImage->Height, 0,
-            static_cast<int32_t>(pImage->data_size), pImage->data);
+            GL_TEXTURE_2D, 0, internal_format, image.Width, image.Height, 0,
+            static_cast<int32_t>(image.data_size), image.data);
     } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, pImage->Width,
-                     pImage->Height, 0, format, type, pImage->data);
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.Width,
+                     image.Height, 0, format, type, image.data);
     }
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

@@ -117,7 +117,7 @@ void Metal2GraphicsManager::initializeGeometries(const Scene& scene) {
             if (material) {
                 if (auto& texture = material->GetBaseColor().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
+                    const Image& image = texture->GetTextureImage();
                     assert(image.Width && image.Height);
                     texture_id = [m_pRenderer createTexture:image];
 
@@ -126,7 +126,7 @@ void Metal2GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetNormal().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
+                    const Image& image = texture->GetTextureImage();
                     texture_id = [m_pRenderer createTexture:image];
 
                     dbc->material.normalMap = texture_id;
@@ -134,7 +134,7 @@ void Metal2GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetMetallic().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
+                    const Image& image = texture->GetTextureImage();
                     texture_id = [m_pRenderer createTexture:image];
 
                     dbc->material.metallicMap = texture_id;
@@ -142,7 +142,7 @@ void Metal2GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetRoughness().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
+                    const Image& image = texture->GetTextureImage();
                     texture_id = [m_pRenderer createTexture:image];
 
                     dbc->material.roughnessMap = texture_id;
@@ -150,7 +150,7 @@ void Metal2GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetAO().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
+                    const Image& image = texture->GetTextureImage();
                     texture_id = [m_pRenderer createTexture:image];
 
                     dbc->material.aoMap = texture_id;
@@ -170,11 +170,11 @@ void Metal2GraphicsManager::initializeGeometries(const Scene& scene) {
 
 void Metal2GraphicsManager::initializeSkyBox(const Scene& scene) {
     if (scene.SkyBox) {
-        std::vector<const std::shared_ptr<My::Image>> images;
+        std::vector<Image> images;
         for (uint32_t i = 0; i < 18; i++) {
             auto& texture = scene.SkyBox->GetTexture(i);
-            const auto& pImage = texture.GetTextureImage();
-            images.push_back(pImage);
+            auto&& image = texture.GetTextureImage();
+            images.push_back(std::forward<Image>(image));
         }
 
         int32_t tex_index = [m_pRenderer createSkyBox:images];

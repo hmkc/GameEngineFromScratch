@@ -18,8 +18,7 @@ class SceneObjectTexture : public BaseSceneObject {
     std::string m_Name;
     uint32_t m_nTexCoordIndex{0};
     std::vector<Matrix4X4f> m_Transforms;
-    std::shared_ptr<Image> m_pImage;
-    std::future<bool> m_asyncLoadFuture;
+    std::future<Image> m_asyncLoadFuture;
 
    public:
     SceneObjectTexture()
@@ -41,10 +40,10 @@ class SceneObjectTexture : public BaseSceneObject {
     }
     [[nodiscard]] const std::string& GetName() const { return m_Name; }
 
-    std::shared_ptr<Image> GetTextureImage();
+    Image GetTextureImage();
 
    private:
-    bool LoadTexture();
+    Image LoadTexture();
     void LoadTextureAsync();
 
     friend std::ostream& operator<<(std::ostream& out,

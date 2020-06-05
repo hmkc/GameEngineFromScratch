@@ -12,8 +12,8 @@ void SceneObjectTexture::LoadTextureAsync() {
     }
 }
 
-bool SceneObjectTexture::LoadTexture() {
-    if (!g_pAssetLoader->FileExists(m_Name.c_str())) return false;
+Image SceneObjectTexture::LoadTexture() {
+    if (!g_pAssetLoader->FileExists(m_Name.c_str())) return Image();
 
     cerr << "Start async loading of " << m_Name << endl;
 
@@ -105,19 +105,13 @@ bool SceneObjectTexture::LoadTexture() {
 
     cerr << "End async loading of " << m_Name << endl;
 
-    atomic_store_explicit(&m_pImage, make_shared<Image>(std::move(image)),
-                          std::memory_order::memory_order_release);
-
-    return true;
+    return image;
 }
 
-std::shared_ptr<Image> SceneObjectTexture::GetTextureImage() {
+Image SceneObjectTexture::GetTextureImage() {
     if (m_asyncLoadFuture.valid()) {
         m_asyncLoadFuture.wait();
-        assert(m_asyncLoadFuture.get());
-        return atomic_load_explicit(&m_pImage,
-                                    std::memory_order::memory_order_acquire);
-    } else {
-        return m_pImage;
     }
+
+    return m_asyncLoadFuture.get();
 }

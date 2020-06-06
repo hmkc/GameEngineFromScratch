@@ -738,7 +738,7 @@ static DXGI_FORMAT getDxgiFormat(const Image& img) {
 int32_t D3d12GraphicsManager::CreateTextureBuffer(SceneObjectTexture& texture) {
     HRESULT hr = S_OK;
 
-    const auto& pImage = texture.GetTextureImage();
+    const auto& image = texture.GetTextureImage();
 
     // Describe and create a Texture2D.
     D3D12_HEAP_PROPERTIES prop = {};
@@ -748,13 +748,13 @@ int32_t D3d12GraphicsManager::CreateTextureBuffer(SceneObjectTexture& texture) {
     prop.CreationNodeMask = 1;
     prop.VisibleNodeMask = 1;
 
-    DXGI_FORMAT format = getDxgiFormat(*pImage);
+    DXGI_FORMAT format = getDxgiFormat(image);
 
     D3D12_RESOURCE_DESC textureDesc = {};
     textureDesc.MipLevels = 1;
     textureDesc.Format = format;
-    textureDesc.Width = pImage->Width;
-    textureDesc.Height = pImage->Height;
+    textureDesc.Width = image.Width;
+    textureDesc.Height = image.Height;
     textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
     textureDesc.DepthOrArraySize = 1;
     textureDesc.SampleDesc.Count = 1;
@@ -801,10 +801,10 @@ int32_t D3d12GraphicsManager::CreateTextureBuffer(SceneObjectTexture& texture) {
     // Copy data to the intermediate upload heap and then schedule a copy
     // from the upload heap to the Texture2D.
     D3D12_SUBRESOURCE_DATA textureData = {};
-    textureData.pData = pImage->data;
-    textureData.RowPitch = pImage->pitch;
-    textureData.SlicePitch = static_cast<uint64_t>(pImage->pitch) *
-                             static_cast<uint64_t>(pImage->Height);
+    textureData.pData = image.data;
+    textureData.RowPitch = image.pitch;
+    textureData.SlicePitch = static_cast<uint64_t>(image.pitch) *
+                             static_cast<uint64_t>(image.Height);
 
     UpdateSubresources(m_pCommandList[m_nFrameIndex], pTextureBuffer,
                        pTextureUploadHeap, 0, 0, subresourceCount,
@@ -1428,7 +1428,6 @@ void D3d12GraphicsManager::initializeGeometries(const Scene& scene) {
             if (material) {
                 if (auto& texture = material->GetBaseColor().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
                     texture_id = CreateTextureBuffer(*texture);
 
                     dbc->material.diffuseMap = texture_id;
@@ -1436,7 +1435,6 @@ void D3d12GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetNormal().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
                     texture_id = CreateTextureBuffer(*texture);
 
                     dbc->material.normalMap = texture_id;
@@ -1444,7 +1442,6 @@ void D3d12GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetMetallic().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
                     texture_id = CreateTextureBuffer(*texture);
 
                     dbc->material.metallicMap = texture_id;
@@ -1452,7 +1449,6 @@ void D3d12GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetRoughness().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
                     texture_id = CreateTextureBuffer(*texture);
 
                     dbc->material.roughnessMap = texture_id;
@@ -1460,7 +1456,6 @@ void D3d12GraphicsManager::initializeGeometries(const Scene& scene) {
 
                 if (auto& texture = material->GetAO().ValueMap) {
                     int32_t texture_id;
-                    const Image& image = *texture->GetTextureImage();
                     texture_id = CreateTextureBuffer(*texture);
 
                     dbc->material.aoMap = texture_id;
@@ -1483,8 +1478,8 @@ void D3d12GraphicsManager::initializeSkyBox(const Scene& scene) {
     assert(scene.SkyBox);
 
     auto& texture = scene.SkyBox->GetTexture(0);
-    const auto& pImage = texture.GetTextureImage();
-    DXGI_FORMAT format = getDxgiFormat(*pImage);
+    const auto& image = texture.GetTextureImage();
+    DXGI_FORMAT format = getDxgiFormat(image);
 
     // Describe and create a Cubemap.
     D3D12_HEAP_PROPERTIES prop = {};
@@ -1497,8 +1492,8 @@ void D3d12GraphicsManager::initializeSkyBox(const Scene& scene) {
     D3D12_RESOURCE_DESC textureDesc = {};
     textureDesc.MipLevels = 2;
     textureDesc.Format = format;
-    textureDesc.Width = pImage->Width;
-    textureDesc.Height = pImage->Height;
+    textureDesc.Width = image.Width;
+    textureDesc.Height = image.Height;
     textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
     textureDesc.DepthOrArraySize = 6;  // eatch cubemap made by 6 face
     textureDesc.SampleDesc.Count = 1;
@@ -1546,15 +1541,15 @@ void D3d12GraphicsManager::initializeSkyBox(const Scene& scene) {
     // skybox, irradiance map
     for (uint32_t i = 0; i < 6; i++) {
         auto& texture = scene.SkyBox->GetTexture(i);
-        const auto& pImage = texture.GetTextureImage();
+        const auto& image = texture.GetTextureImage();
 
         // Copy data to the intermediate upload heap and then schedule a copy
         // from the upload heap to the Texture2D.
         D3D12_SUBRESOURCE_DATA textureData = {};
-        textureData.pData = pImage->data;
-        textureData.RowPitch = pImage->pitch;
-        textureData.SlicePitch = static_cast<uint64_t>(pImage->pitch) *
-                                 static_cast<uint64_t>(pImage->Height);
+        textureData.pData = image.data;
+        textureData.RowPitch = image.pitch;
+        textureData.SlicePitch = static_cast<uint64_t>(image.pitch) *
+                                 static_cast<uint64_t>(mage.Height);
 
         UpdateSubresources(m_pCommandList[m_nFrameIndex], pTextureBuffer,
                            pTextureUploadHeap, 0, i, 1, &textureData);
